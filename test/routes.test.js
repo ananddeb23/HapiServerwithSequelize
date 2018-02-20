@@ -11,6 +11,15 @@ describe('corretc HTTP response should be given  for ', () => {
       expect(res.statusCode).toBe(200);
     });
   });
+  it('/path incorrect must return response of 404', () => {
+    const req = {
+      method: 'GET',
+      url: '127.0.0.1:4000/showdetails12',
+    };
+    server.inject(req, (res) => {
+      expect(res.statusCode).toBe(404);
+    });
+  });
   it('/200 response should be given by API endpoint for storetails', () => {
     const req = {
       method: 'GET',
@@ -27,6 +36,24 @@ describe('corretc HTTP response should be given  for ', () => {
     };
     server.inject(req, (res) => {
       expect(res.statusCode).toBe(200);
+    });
+  });
+  it('404 response should be given by API endpoint for route /like/{id} but id not in db', () => {
+    const req = {
+      method: 'GET',
+      url: '127.0.0.1:4000/like/345',
+    };
+    server.inject(req, (res) => {
+      expect(res.statusCode).toBe(404);
+    });
+  });
+  it('404 response should be given by API endpoint for route /dislike/{id} but id not in db', () => {
+    const req = {
+      method: 'GET',
+      url: '127.0.0.1:4000/dislike/345',
+    };
+    server.inject(req, (res) => {
+      expect(res.statusCode).toBe(404);
     });
   });
   it('/200 response should be given by API endpoint for route /dislike/{id}', () => {

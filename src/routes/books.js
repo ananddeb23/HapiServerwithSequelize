@@ -130,7 +130,7 @@ module.exports = [
         // console.log('after', groupedByAuthor);
         response(groupedByAuthor).code(200);
       }).catch((msg) => {
-        response(msg.message).code(200);
+        response(msg.message).code(500);
       });
       // const getbookdetails = rp('https://5gj1qvkc5h.execute-api.us-east-1.amazonaws.com/dev/allBooks');
       // getbookdetails.then((bookdetails) => {
@@ -158,7 +158,7 @@ module.exports = [
           response('Records have been created!').code(201);
         });
       }).catch((msg) => {
-        response(msg.message).code(200);
+        response(msg.message).code(500);
       });
       // const getbookdetails = rp('https://5gj1qvkc5h.execute-api.us-east-1.amazonaws.com/dev/allBooks');
       // getbookdetails.then((bookdetails) => {
@@ -179,7 +179,7 @@ module.exports = [
       updatelikestatus('like', request.params.id).then(() => {
         response('ID has been liked').code(200);
       }).catch(() => {
-        response('Book id not in database').code(200);
+        response('Book id not in database').code(404);
       });
     },
   },
@@ -190,7 +190,7 @@ module.exports = [
       updatelikestatus('dislike', request.params.id).then(() => {
         response('ID has been disliked').code(200);
       }).catch(() => {
-        response('Book id not in database').code(200);
+        response('Book id not in database').code(404);
       });
     },
   },
