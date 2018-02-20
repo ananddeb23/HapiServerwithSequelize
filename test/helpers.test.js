@@ -19,6 +19,7 @@ describe('group by function must work correctly', () => {
     expect((booksroute.groupBy(data, 'name'))).toEqual(result);
   });
 });
+
 describe('array of promises must be retuerned testing getpromsesFunction', () => {
   const data = [{
     Author: 'J K Rowling',
