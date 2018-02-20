@@ -1,0 +1,30 @@
+{
+  "name": "servernode",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+   
+    "custom_init": "NODE_ENV=test sequelize db:create && NODE_ENV=development sequelize db:create && node_modules/.bin/sequelize db:migrate",
+    "start": "sequelize db:migrate && node ./src/server.js",
+    "test": "NODE_ENV=test sequelize db:migrate:undo:all && NODE_ENV=test sequelize db:migrate && jest --forceExit --runInBand"
+  },
+  "author": "Anand",
+  "license": "ISC",
+  "dependencies": {
+    "es6-promise": "^4.2.4",
+    "eslint": "^4.17.0",
+    "hapi": "^16.6.2",
+    "lab": "^14.3.2",
+    "pg": "^6.4.2",
+    "pg-hstore": "^2.3.2",
+    "request-promise": "^4.2.2",
+    "sequelize": "^4.33.3",
+    "sequelize-cli": "^3.2.0"
+  },
+  "devDependencies": {
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "jest": "^22.3.0"
+  }
+}
