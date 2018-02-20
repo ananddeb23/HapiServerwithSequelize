@@ -1,10 +1,8 @@
 const server = require('../src/server.js');
-const models = require('../models');
 
-const request = require('request');
 
-describe('200 response should be given by API endpoint for showdetails', () => {
-  it('/combine', () => {
+describe('corretc HTTP response should be given  for ', () => {
+  it('/path showdetials must return response of 200', () => {
     const req = {
       method: 'GET',
       url: '127.0.0.1:4000/showdetails',

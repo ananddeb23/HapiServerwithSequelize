@@ -4,16 +4,15 @@ require('es6-promise');
 
 const url2 = 'https://5gj1qvkc5h.execute-api.us-east-1.amazonaws.com/dev/findBookById/';
 
+// returns an array of promises to get ratings for each book id
 const getpromisesbookratings = (bookdetailsArray) => {
-  // //console.log('getpromisebr', bookdetailsArray);
   const bookratingpromisesresult = [];
   for (let i = 0; i < bookdetailsArray.length; i += 1) {
     bookratingpromisesresult.push(rp(`${url2}${bookdetailsArray[i].id}`));
   }
-  // //console.log('getpromisebr2', bookratingpromisesresult);
   return bookratingpromisesresult;
 };
-
+// returns an array containingt ratings for each book id
 const ratingsfromresult = (bookratingpromises, bookratingsarray) => {
   const booksrating = [];
   for (let i = 0; i < bookratingpromises.length; i += 1) {
@@ -21,6 +20,7 @@ const ratingsfromresult = (bookratingpromises, bookratingsarray) => {
   }
   return booksrating;
 };
+// returns an array of objects where each has an additonal property of ratings
 const addratingspropertytobooks = (bookdetailsArray, booksrating) => {
   const bookdetailswithratingarray = bookdetailsArray.slice();
   for (let i = 0; i < bookdetailsArray.length; i += 1) {
@@ -30,12 +30,13 @@ const addratingspropertytobooks = (bookdetailsArray, booksrating) => {
   return bookdetailswithratingarray;
 };
 
+// groups input array of objects by a given property name
 const groupBy = (xs, key) => xs.reduce((rv, x) => {
   (rv[x[key]] = rv[x[key]] || []).push(x);
   return rv;
 }, {});
 
-
+// returns a promise which resolves when data is sucessfully inserted in the database
 const insertintodb = (bookdetailswithratingarray) => {
   const bookdetailswithratingandlike = bookdetailswithratingarray.slice();
   for (let i = 0; i < bookdetailswithratingarray.length; i += 1) {
@@ -58,6 +59,7 @@ const insertintodb = (bookdetailswithratingarray) => {
   return Promise.all([promiseinsertdb1, promiseinsertdb2]);
 };
 
+// returns a promise which resolves when data is updated in the database and rejects if book id is not present in database
 const updatelikestatus = (status, id) => {
   const updatelikepromise = new Promise((resolve, reject) => {
     model.librarymybooklikes.find({
@@ -84,9 +86,25 @@ const updatelikestatus = (status, id) => {
   });
   return updatelikepromise;
 };
-
+// returns a promise which resolves when data is fetched from all source apis and the data is reformatted into the required form
+const getPromiseGetandFormatData = () => {
+  const promiseGetandFormatData = new Promise((resolve, reject) => {
+    const getbookdetails = rp('https://5gj1qvkc5h.execute-api.us-east-1.amazonaws.com/dev/allBooks');
+    getbookdetails.then((bookdetails) => {
+      const bookdetailsArray = JSON.parse(bookdetails).books;
+      const bookratingpromises = getpromisesbookratings(bookdetailsArray);
+      Promise.all(bookratingpromises).then((bookratingsarray) => {
+        const booksrating = ratingsfromresult(bookratingpromises, bookratingsarray);
+        const bookdetailswithratingarray = addratingspropertytobooks(bookdetailsArray, booksrating);
+        resolve(bookdetailswithratingarray);
+      }).catch(() => { reject(new Error('failed in getting all the ratings')); });
+    }).catch(() => { reject(new Error('failed in getting data from api 1')); });
+  });
+  return promiseGetandFormatData;
+};
+// formats the object keys to match database table fields specifications and returns an array
 const getinformat = (bookdetailswithratingarray) => {
-  const origbookarray = bookdetailswithratingarray.slice();
+  // const origbookarray = bookdetailswithratingarray.slice();
   const resultarrayindbformat = [];
   for (let i = 0; i < bookdetailswithratingarray.length; i++) {
     const obj = {
@@ -107,39 +125,51 @@ module.exports = [
     method: 'GET',
     path: '/showdetails',
     handler: (request, response) => {
-      const getbookdetails = rp('https://5gj1qvkc5h.execute-api.us-east-1.amazonaws.com/dev/allBooks');
-      getbookdetails.then((bookdetails) => {
-        const bookdetailsArray = JSON.parse(bookdetails).books;
-        const bookratingpromises = getpromisesbookratings(bookdetailsArray);
-        Promise.all(bookratingpromises).then((bookratingsarray) => {
-          const booksrating = ratingsfromresult(bookratingpromises, bookratingsarray);
-          const bookdetailswithratingarray = addratingspropertytobooks(bookdetailsArray, booksrating);
-          // console.log(bookdetailswithratingarray);
-          const groupedByAuthor = groupBy(bookdetailswithratingarray, 'Author');
-          // console.log('after', groupedByAuthor);
-          response(groupedByAuthor).code(200);
-        });
+      getPromiseGetandFormatData().then((bookdetailswithratingarray) => {
+        const groupedByAuthor = groupBy(bookdetailswithratingarray, 'Author');
+        // console.log('after', groupedByAuthor);
+        response(groupedByAuthor).code(200);
+      }).catch((msg) => {
+        response(msg.message).code(200);
       });
+      // const getbookdetails = rp('https://5gj1qvkc5h.execute-api.us-east-1.amazonaws.com/dev/allBooks');
+      // getbookdetails.then((bookdetails) => {
+      //   const bookdetailsArray = JSON.parse(bookdetails).books;
+      //   const bookratingpromises = getpromisesbookratings(bookdetailsArray);
+      //   Promise.all(bookratingpromises).then((bookratingsarray) => {
+      //     const booksrating = ratingsfromresult(bookratingpromises, bookratingsarray);
+      //     const bookdetailswithratingarray = addratingspropertytobooks(bookdetailsArray, booksrating);
+      //     // console.log(bookdetailswithratingarray);
+      //     const groupedByAuthor = groupBy(bookdetailswithratingarray, 'Author');
+      //     // console.log('after', groupedByAuthor);
+      //     response(groupedByAuthor).code(200);
+      //   });
+      // });//
     },
   },
+
   {
     method: 'GET',
     path: '/storedetails',
     handler: (request, response) => {
-      const getbookdetails = rp('https://5gj1qvkc5h.execute-api.us-east-1.amazonaws.com/dev/allBooks');
-      getbookdetails.then((bookdetails) => {
-        const bookdetailsArray = JSON.parse(bookdetails).books;
-        const bookratingpromises = getpromisesbookratings(bookdetailsArray);
-        Promise.all(bookratingpromises).then((bookratingsarray) => {
-          const booksrating = ratingsfromresult(bookratingpromises, bookratingsarray);
-          const bookdetailswithratingarray = addratingspropertytobooks(bookdetailsArray, booksrating);
-          const datatoinsert = getinformat(bookdetailswithratingarray);
-          insertintodb(datatoinsert).then((msg) => {
-            // //console.log('MSG', msg);
-            response('Records have been created!').code(201);
-          });
+      getPromiseGetandFormatData().then((bookdetailswithratingarray) => {
+        const datatoinsert = getinformat(bookdetailswithratingarray);
+        insertintodb(datatoinsert).then((msg) => {
+          response('Records have been created!').code(201);
         });
+      }).catch((msg) => {
+        response(msg.message).code(200);
       });
+      // const getbookdetails = rp('https://5gj1qvkc5h.execute-api.us-east-1.amazonaws.com/dev/allBooks');
+      // getbookdetails.then((bookdetails) => {
+      //   const bookdetailsArray = JSON.parse(bookdetails).books;
+      //   const bookratingpromises = getpromisesbookratings(bookdetailsArray);
+      //   Promise.all(bookratingpromises).then((bookratingsarray) => {
+      //     const booksrating = ratingsfromresult(bookratingpromises, bookratingsarray);
+      //     const bookdetailswithratingarray = addratingspropertytobooks(bookdetailsArray, booksrating);
+
+      //   });
+      // });
     },
   },
   {

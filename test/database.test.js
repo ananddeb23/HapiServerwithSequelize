@@ -1,7 +1,7 @@
 const server = require('../src/server.js');
 const models = require('../models');
 const booksroute = require('../src/routes/books');
-const request = require('request');
+// const request = require('request');
 
 describe('Testing create records/storedetails function', () => {
   beforeAll((done) => {
