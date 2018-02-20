@@ -62,7 +62,7 @@ const updatelikestatus = (status, id) => {
   const updatelikepromise = new Promise((resolve, reject) => {
     model.librarymybooklikes.find({
       where: {
-
+        bookid: id,
       },
     }).then((datarec) => {
       // console.log(datarec);
