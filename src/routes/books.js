@@ -86,6 +86,36 @@ const updatelikestatus = (status, id) => {
   });
   return updatelikepromise;
 };
+const togglelikestatus = (id) => {
+  const updatelikepromise = new Promise((resolve, reject) => {
+    model.librarymybooklikes.find({
+      where: {
+        bookid: id,
+      },
+    }).then((datarec) => {
+      // console.log(datarec);
+      if (!datarec) {
+        return reject(new Error(' No record'));
+      }
+      let nextstat = 'like';
+      if (datarec.dataValues.likeStatus === 'like') {
+        nextstat = 'dislike';
+      }
+      const obj = {
+        author: datarec.dataValues.author,
+        bookid: datarec.dataValues.bookid,
+        bookname: datarec.dataValues.bookname,
+        rating: datarec.dataValues.rating,
+        likeStatus: nextstat,
+      };
+      model.librarymybooklikes.update(obj, { where: { bookid: id } }).then(() => {
+        // console.log('Updated');
+        resolve(nextstat);
+      });
+    });
+  });
+  return updatelikepromise;
+};
 // returns a promise which resolves when data is fetched from all source apis and the data is reformatted into the required form
 const getPromiseGetandFormatData = () => {
   const promiseGetandFormatData = new Promise((resolve, reject) => {
@@ -189,7 +219,7 @@ module.exports = [
     handler: (request, response) => {
       model.librarymybooklikes.findAll().then((data) => {
         if (data.length === 0) {
-          response('EMPTYDB').code(200);
+          response(JSON.stringify('EMPTYDB')).code(200);
         }
         const datatosend = [];
         for (let i = 0; i < data.length; i += 1) {
@@ -203,7 +233,8 @@ module.exports = [
           datatosend.push(obj);
         }
         const groupedByAuthor = groupBy(datatosend, 'author');
-        response(groupedByAuthor).code(200);
+        const res = JSON.stringify(groupedByAuthor);
+        response(res).code(200);
       });
     },
   },
@@ -235,6 +266,17 @@ module.exports = [
         });
       }).catch((msg) => {
         response(msg.message).code(500);
+      });
+    },
+  },
+  {
+    method: 'GET',
+    path: '/togglelike/{id}',
+    handler: (request, response) => {
+      togglelikestatus(request.params.id).then((msg) => {
+        response(msg).code(200);
+      }).catch(() => {
+        response('Book id not in database').code(404);
       });
     },
   },
