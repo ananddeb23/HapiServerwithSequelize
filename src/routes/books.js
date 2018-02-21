@@ -185,6 +185,61 @@ module.exports = [
   },
   {
     method: 'GET',
+    path: '/getData',
+    handler: (request, response) => {
+      model.librarymybooklikes.findAll().then((data) => {
+        if (data.length === 0) {
+          response('EMPTYDB').code(200);
+        }
+        const datatosend = [];
+        for (let i = 0; i < data.length; i += 1) {
+          const obj = {
+            bookid: data[i].bookid,
+            author: data[i].author,
+            bookname: data[i].bookname,
+            rating: data[i].rating,
+            likeStatus: data[i].likeStatus,
+          };
+          datatosend.push(obj);
+        }
+        const groupedByAuthor = groupBy(datatosend, 'author');
+        response(groupedByAuthor).code(200);
+      });
+    },
+  },
+  {
+    method: 'GET',
+    path: '/populateandgetData',
+    handler: (request, response) => {
+      getPromiseGetandFormatData().then((bookdetailswithratingarray) => {
+        const datatoinsert = getinformat(bookdetailswithratingarray);
+        insertintodb(datatoinsert).then((msg) => {
+          model.librarymybooklikes.findAll().then((data) => {
+            if (data.length === 0) {
+              response('EMPTYDBERROR').code(200);
+            }
+            const datatosend = [];
+            for (let i = 0; i < data.length; i += 1) {
+              const obj = {
+                bookid: data[i].bookid,
+                author: data[i].author,
+                bookname: data[i].bookname,
+                rating: data[i].rating,
+                likeStatus: data[i].likeStatus,
+              };
+              datatosend.push(obj);
+            }
+            const groupedByAuthor = groupBy(datatosend, 'author');
+            response(groupedByAuthor).code(200);
+          });
+        });
+      }).catch((msg) => {
+        response(msg.message).code(500);
+      });
+    },
+  },
+  {
+    method: 'GET',
     path: '/dislike/{id}',
     handler: (request, response) => {
       updatelikestatus('dislike', request.params.id).then(() => {
